@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Addition and Subtraction of Directed Numbers</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Fredoka & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top center, #1e293b 0%, #0f172a 100%);
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .font-game {
+      font-family: 'Fredoka', cursive, sans-serif;
+    }
+
+    /* Vector Arrow Shapes using CSS Clip Path */
+    .arrow-shape-right {
+      clip-path: polygon(0% 15%, 72% 15%, 72% 0%, 100% 50%, 72% 100%, 72% 85%, 0% 85%);
+    }
+
+    .arrow-shape-left {
+      clip-path: polygon(28% 0%, 28% 15%, 100% 15%, 100% 85%, 28% 85%, 28% 100%, 0% 50%);
+    }
+
+    /* Vibrant Gradient Palettes for Vector Option Cards */
+    .bg-gradient-cyan {
+      background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+      border-color: #38bdf8;
+    }
+
+    .bg-gradient-red {
+      background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+      border-color: #f87171;
+    }
+
+    .bg-gradient-purple {
+      background: linear-gradient(135deg, #a855f7 0%, #6b21a8 100%);
+      border-color: #c084fc;
+    }
+
+    .bg-gradient-gold {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      border-color: #fbbf24;
+    }
+
+    /* 3D Interactive Buttons */
+    .btn-3d {
+      transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 5px 0 rgba(0, 0, 0, 0.35), 0 8px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .btn-3d:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 7px 0 rgba(0, 0, 0, 0.35), 0 12px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-3d:active:not(:disabled) {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35), 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    /* High Performance Drag Proxy */
+    #drag-proxy {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%) scale(1.05);
+      opacity: 0.95;
+      filter: drop-shadow(0 15px 25px rgba(0,0,0,0.6));
+      transition: none !important;
+      will-change: transform, left, top;
+    }
+
+    .frog-idle {
+      animation: frog-wiggle 2.5s ease-in-out infinite;
+    }
+
+    @keyframes frog-wiggle {
+      0%, 100% { transform: scale(1) translateY(0); }
+      50% { transform: scale(1.06) translateY(-3px); }
+    }
+
+    .number-line-glow {
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.35);
+      border-color: #38bdf8 !important;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col justify-between items-center p-2 sm:p-4 text-slate-100">
+
+  <!-- Main Game Container -->
+  <div class="w-full max-w-4xl bg-slate-800/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-slate-700/80 p-4 sm:p-6 flex flex-col gap-4">
+
+    <!-- Header Bar -->
+    <header class="flex flex-col sm:flex-row justify-between items-center gap-3 border-b border-slate-700 pb-3">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl sm:text-4xl">🐸</span>
+        <div>
+          <h1 class="text-lg sm:text-2xl font-black font-game text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-sky-400 to-indigo-300">
+            Addition and Subtraction of Directed Numbers
+          </h1>
+          <p class="text-xs text-slate-400 font-medium">Drag unit vectors onto the SVG number line & watch the frog jump!</p>
+        </div>
+      </div>
+
+      <!-- Question Counter & Live Score -->
+      <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+        <div class="bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700 text-center">
+          <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Question</span>
+          <span id="q-counter" class="text-base font-extrabold font-game text-sky-400">1 / 20</span>
+        </div>
+
+        <div class="flex-1 sm:w-32">
+          <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
+            <span>Progress</span>
+            <span id="progress-text">5%</span>
+          </div>
+          <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-700">
+            <div id="progress-bar" class="bg-gradient-to-r from-teal-400 to-sky-500 h-full rounded-full transition-all duration-300 w-[5%]"></div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700 text-center">
+          <span class="text-[10px] text-amber-400 uppercase font-bold tracking-wider block">Score</span>
+          <span id="score-display" class="text-base font-extrabold font-game text-amber-400">0</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="bg-slate-900/90 border border-slate-700/80 rounded-2xl p-4 text-center relative overflow-hidden shadow-inner flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex-1 text-center sm:text-left">
+        <div class="text-[11px] font-bold uppercase tracking-widest text-sky-400 mb-0.5">Current Problem</div>
+        <div id="equation-display" class="text-3xl sm:text-5xl font-black font-game text-white tracking-widest">
+          6 - 9 = ?
+        </div>
+      </div>
+
+      <div class="flex flex-col items-center sm:items-end gap-2 w-full sm:w-auto">
+        <div id="step-prompt" class="text-xs sm:text-sm font-bold text-indigo-300 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-indigo-500/30">
+          <span>👉 Step 1: Drag or tap <b>Term 1 Vector</b> onto Number Line (starts at 0)</span>
+        </div>
+        <button id="btn-next-q" class="hidden btn-3d bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black font-game text-xs px-4 py-2 rounded-xl border border-emerald-400">
+          Next Question ➔
+        </button>
+      </div>
+    </div>
+
+    <div id="number-line-container" class="relative bg-slate-950/90 rounded-2xl border-2 border-slate-700 p-2 sm:p-4 shadow-xl overflow-x-auto transition-all duration-300">
+      <div class="min-w-[760px] relative">
+        <svg id="number-line-svg" viewBox="0 0 1000 180" class="w-full h-auto overflow-visible select-none">
+          <!-- Vector Layer -->
+          <g id="vector-layer">
+            <path id="vector1-arc" d="" fill="none" stroke="#00c6ff" stroke-width="4.5" stroke-dasharray="8 4" stroke-linecap="round" class="transition-all duration-200 opacity-0"/>
+            <path id="vector2-arc" d="" fill="none" stroke="#f59e0b" stroke-width="4.5" stroke-dasharray="8 4" stroke-linecap="round" class="transition-all duration-200 opacity-0"/>
+
+            <!-- Vector Arrowheads -->
+            <polygon id="vector1-arrow" points="" fill="#00c6ff" class="opacity-0 transition-opacity duration-200"/>
+            <polygon id="vector2-arrow" points="" fill="#f59e0b" class="opacity-0 transition-opacity duration-200"/>
+          </g>
+
+          <!-- Axis Line -->
+          <line x1="40" y1="110" x2="960" y2="110" stroke="#94a3b8" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M 35 110 L 48 103 L 48 117 Z" fill="#94a3b8"/>
+          <path d="M 965 110 L 952 103 L 952 117 Z" fill="#94a3b8"/>
+
+          <!-- Ticks & Labels (-15 to +15) -->
+          <g id="ticks-layer"></g>
+
+          <!-- Frog Mascot 🐸 -->
+          <g id="frog-group" transform="translate(482, 55)" class="frog-idle cursor-pointer transition-transform duration-100">
+            <ellipse cx="18" cy="38" rx="14" ry="4" fill="rgba(0,0,0,0.3)" />
+            <path d="M 6 30 C 6 15, 30 15, 30 30 C 32 38, 4 38, 6 30 Z" fill="#4ade80" stroke="#16a34a" stroke-width="2"/>
+            <circle cx="11" cy="16" r="6" fill="#4ade80" stroke="#16a34a" stroke-width="1.5"/>
+            <circle cx="25" cy="16" r="6" fill="#4ade80" stroke="#16a34a" stroke-width="1.5"/>
+            <circle cx="11" cy="16" r="2.5" fill="#ffffff"/>
+            <circle cx="25" cy="16" r="2.5" fill="#ffffff"/>
+            <circle cx="11" cy="16" r="1.2" fill="#000000"/>
+            <circle cx="25" cy="16" r="1.2" fill="#000000"/>
+            <path d="M 13 27 Q 18 31 23 27" fill="none" stroke="#166534" stroke-width="1.5" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="flex justify-between items-center mt-1 px-2 text-xs font-semibold text-slate-400">
+        <span>Scale: -15 to +15</span>
+        <button id="btn-reset-step" class="text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-lg border border-slate-600 shadow-sm flex items-center gap-1 transition-all">
+          🔄 Reset Vectors
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-slate-900/60 rounded-2xl p-3 border border-slate-700/80">
+      <div class="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mb-2.5 text-center">
+        Colorful Vector Options (Magnitude & Direction Only)
+      </div>
+      <div id="vector-cards-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        <!-- 4 Vibrant Arrow Cards populated via JS -->
+      </div>
+    </div>
+
+    <div id="keypad-wrapper" class="bg-slate-900/80 border border-slate-700/80 rounded-2xl p-3 sm:p-4 shadow-md flex flex-col md:flex-row gap-4 items-center justify-between transition-all duration-300 opacity-50 pointer-events-none relative">
+      
+      <!-- Lock Overlay -->
+      <div id="keypad-lock-overlay" class="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px] rounded-2xl z-20 flex items-center justify-center text-amber-300 font-bold font-game text-xs sm:text-sm border border-amber-500/30">
+        🔒 Place both vectors on the number line to unlock Keypad!
+      </div>
+
+      <!-- Answer Input Box -->
+      <div class="w-full md:w-1/3 flex flex-col items-center md:items-start gap-1">
+        <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Final Landing Coordinate</label>
+        <div id="answer-display-box" class="w-full bg-slate-950 border-2 border-indigo-500/60 rounded-xl px-4 py-2 text-center text-2xl font-black font-game text-white shadow-inner flex items-center justify-center gap-2">
+          <span>Answer:</span>
+          <span id="typed-answer-text" class="text-teal-400 bg-slate-900 px-3 py-0.5 rounded-lg border border-slate-700 min-w-[3.5rem] tracking-wider">[ ? ]</span>
+        </div>
+      </div>
+
+      <!-- Keypad Grid -->
+      <div id="keypad-grid" class="w-full md:w-2/3 grid grid-cols-7 gap-1.5 sm:gap-2 z-10">
+        <button class="key-btn btn-3d bg-slate-800 hover:bg-slate-700 text-white font-bold font-game text-base rounded-xl py-2 border border-slate-600" data-key="1">1</button>
+        <button class="key-btn btn-3d bg-slate-800 hover:bg-slate-700 text-white font-bold font-game text-base rounded-xl py-2 border border-slate-600" data-key="2">2</button>
+        <button class="key-btn btn-3d bg-slate-800 hover:bg-slate-700 text-white font-bold font-game text-base rounded-xl py-2 border border-slate-600" data-key="3">3</button>
+        <button class="key-btn btn-3d bg-slate-800 hover:bg-slate-700 text-white font-bold font-game text-base rounded-xl py-2 border border-slate-600" data-key="4">4</button>
+        <button class="key-btn btn-3d bg-slate-800 hover:bg-slate-700 text-white font-bold font-game text-base rounded-xl py-2 border border-slate-600" data-key="5">5</button>
+        <button class="key-btn btn-3d bg-slate-800 hover:bg-slate-700 text-white font-bold font-game text-base rounded-xl py-2 border border-slate-600" data-key="6">6</button>
+        <button class="key-btn btn-3d bg-slate-800 hover:bg-slate-700 text-white font-bold font-game text-base rounded-xl py-2 border border-slate-600" data-key="7">7</button>
+
+        <button class="key-btn btn-3d bg-slate-800 hover:bg-slate-700 text-white font-bold font-game text-base rounded-xl py-2 border border-slate-600" data-key="8">8</button>
+        <button class="key-btn btn-3d bg-slate-800 hover:bg-slate-700 text-white font-bold font-game text-base rounded-xl py-2 border border-slate-600" data-key="9">9</button>
+        <button class="key-btn btn-3d bg-slate-800 hover:bg-slate-700 text-white font-bold font-game text-base rounded-xl py-2 border border-slate-600" data-key="0">0</button>
+        <button class="key-btn btn-3d bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold font-game text-base rounded-xl py-2 border border-amber-500/40" data-key="-">-</button>
+        <button class="key-btn btn-3d bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold font-game text-xs rounded-xl py-2 border border-slate-500" data-key="DEL">DEL</button>
+        <button class="key-btn btn-3d bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-bold font-game text-xs rounded-xl py-2 border border-rose-500/40" data-key="CLR">CLR</button>
+        <button id="btn-submit" class="key-btn btn-3d bg-gradient-to-r from-teal-500 to-sky-600 hover:from-teal-400 hover:to-sky-500 text-white font-black font-game text-xs rounded-xl py-2 border border-teal-400 shadow-lg col-span-1">CHECK</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Notification Toast Banner -->
+  <div id="toast-banner" class="fixed top-5 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white px-6 py-3 rounded-2xl shadow-2xl backdrop-blur-md border border-slate-700 text-sm font-bold opacity-0 pointer-events-none transition-all duration-200 z-50 flex items-center gap-2">
+    <span id="toast-icon">ℹ️</span>
+    <span id="toast-msg">Notification text...</span>
+  </div>
+
+  <!-- Floating Drag Proxy -->
+  <div id="drag-proxy" class="hidden"></div>
+
+  <div id="summary-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-700 text-center flex flex-col items-center gap-4 max-h-[90vh] overflow-y-auto">
+      <div class="text-6xl animate-bounce">🐸</div>
+      <h2 class="text-2xl sm:text-3xl font-black font-game text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-sky-400">
+        Quiz Complete!
+      </h2>
+      <p class="text-slate-400 text-xs font-medium">Addition and Subtraction of Directed Numbers</p>
+
+      <!-- Star Ratings -->
+      <div id="star-display" class="text-4xl flex gap-2">
+        <span>⭐</span><span>⭐</span><span>⭐</span>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="w-full bg-slate-900/80 rounded-2xl p-4 border border-slate-700 grid grid-cols-2 gap-3 text-left">
+        <div>
+          <span class="text-[10px] text-slate-400 font-bold uppercase block">Total Score</span>
+          <span id="summary-score" class="text-2xl font-black font-game text-amber-400">0</span>
+        </div>
+        <div>
+          <span class="text-[10px] text-slate-400 font-bold uppercase block">Accuracy</span>
+          <span id="summary-accuracy" class="text-2xl font-black font-game text-teal-400">100%</span>
+        </div>
+        <div>
+          <span class="text-[10px] text-slate-400 font-bold uppercase block">Questions Solved</span>
+          <span class="text-base font-bold font-game text-indigo-300">20 / 20</span>
+        </div>
+        <div>
+          <span class="text-[10px] text-slate-400 font-bold uppercase block">Performance</span>
+          <span id="summary-grade" class="text-base font-bold font-game text-indigo-300">Master!</span>
+        </div>
+      </div>
+
+      <!-- Question Review List -->
+      <div class="w-full text-left">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Question Review</h3>
+        <div id="review-list" class="bg-slate-950 rounded-xl p-3 border border-slate-700 max-h-40 overflow-y-auto text-xs space-y-1.5">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <button id="btn-restart-game" class="w-full py-3.5 bg-gradient-to-r from-teal-500 to-sky-600 hover:from-teal-400 hover:to-sky-500 text-white font-black font-game text-lg rounded-2xl shadow-xl transition-all btn-3d">
+        🔄 Play Again
+      </button>
+    </div>
+  </div>
+
+  <script>
+    class WebAudioSynth {
+      constructor() {
+        this.ctx = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) this.ctx = new AudioContextClass();
+        }
+      }
+
+      playTone(freq, type = 'sine', duration = 0.15, vol = 0.2) {
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {}
+      }
+
+      frogJump() {
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(240, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(680, this.ctx.currentTime + 0.24);
+          gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.25);
+        } catch (e) {}
+      }
+
+      tap() { this.playTone(480, 'sine', 0.05, 0.15); }
+      drop() {
+        this.playTone(320, 'triangle', 0.08, 0.2);
+        setTimeout(() => this.playTone(480, 'sine', 0.1, 0.15), 30);
+      }
+      correct() {
+        [523, 659, 783, 1046].forEach((f, i) => {
+          setTimeout(() => this.playTone(f, 'triangle', 0.18, 0.25), i * 70);
+        });
+      }
+      wrong() {
+        [280, 210].forEach((f, i) => {
+          setTimeout(() => this.playTone(f, 'sawtooth', 0.18, 0.2), i * 100);
+        });
+      }
+      fanfare() {
+        [523, 659, 783, 1046, 1318].forEach((f, i) => {
+          setTimeout(() => this.playTone(f, 'triangle', 0.28, 0.3), i * 90);
+        });
+      }
+    }
+
+    const audioSynth = new WebAudioSynth();
+
+    const QUESTIONS_DATA = [
+      { term1: 6,   term2: -9,  display: "6 - 9 = ?" },
+      { term1: -3,  term2: 7,   display: "-3 + 7 = ?" },
+      { term1: 4,   term2: -10, display: "4 - 10 = ?" },
+      { term1: -5,  term2: -4,  display: "-5 - 4 = ?" },
+      { term1: 8,   term2: -12, display: "8 - 12 = ?" },
+      { term1: -7,  term2: 5,   display: "-7 + 5 = ?" },
+      { term1: 2,   term2: -8,  display: "2 - 8 = ?" },
+      { term1: -6,  term2: -6,  display: "-6 - 6 = ?" },
+      { term1: 9,   term2: -5,  display: "9 - 5 = ?" },
+      { term1: -8,  term2: 11,  display: "-8 + 11 = ?" },
+      { term1: 5,   term2: -13, display: "5 - 13 = ?" },
+      { term1: -2,  term2: -7,  display: "-2 - 7 = ?" },
+      { term1: 7,   term2: -14, display: "7 - 14 = ?" },
+      { term1: -9,  term2: 6,   display: "-9 + 6 = ?" },
+      { term1: 3,   term2: -11, display: "3 - 11 = ?" },
+      { term1: -4,  term2: 12,  display: "-4 + 12 = ?" },
+      { term1: 1,   term2: -9,  display: "1 - 9 = ?" },
+      { term1: -10, term2: 4,   display: "-10 + 4 = ?" },
+      { term1: 8,   term2: -15, display: "8 - 15 = ?" },
+      { term1: -6,  term2: 14,  display: "-6 + 14 = ?" }
+    ];
+
+    let currentQuestionIdx = 0;
+    let totalScore = 0;
+    let correctCount = 0;
+    let currentStep = 1; // 1: Term 1 vector, 2: Term 2 vector, 3: Keypad input
+    let typedAnswer = "";
+    let placedVector1 = null;
+    let placedVector2 = null;
+    let questionResults = [];
+    let isQuestionLocked = false;
+    let autoAdvanceTimer = null;
+
+    // SVG Number Line Mapping (-15 to +15 across 1000px viewBox)
+    const SVG_CENTER_X = 500;
+    const UNIT_PIXELS = 30;
+
+    function valToX(val) {
+      return SVG_CENTER_X + (val * UNIT_PIXELS);
+    }
+
+    function buildNumberLineTicks() {
+      const layer = document.getElementById('ticks-layer');
+      layer.innerHTML = '';
+
+      for (let i = -15; i <= 15; i++) {
+        const x = valToX(i);
+        const isMajor = (i % 5 === 0);
+        const tickH = isMajor ? 18 : 10;
+
+        const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tickLine.setAttribute('x1', x);
+        tickLine.setAttribute('y1', 110 - tickH / 2);
+        tickLine.setAttribute('x2', x);
+        tickLine.setAttribute('y2', 110 + tickH / 2);
+        tickLine.setAttribute('stroke', isMajor ? '#38bdf8' : '#64748b');
+        tickLine.setAttribute('stroke-width', isMajor ? '2' : '1');
+        layer.appendChild(tickLine);
+
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', x);
+        label.setAttribute('y', 140);
+        label.setAttribute('text-anchor', 'middle');
+        label.setAttribute('font-size', isMajor ? '13' : '11');
+        label.setAttribute('font-weight', isMajor ? 'bold' : 'normal');
+        label.setAttribute('fill', i === 0 ? '#38bdf8' : (isMajor ? '#e2e8f0' : '#94a3b8'));
+        label.textContent = (i > 0) ? `+${i}` : `${i}`;
+        layer.appendChild(label);
+      }
+    }
+
+    function triggerFrogParabolicJump(startVal, endVal, callback) {
+      audioSynth.frogJump();
+      const frog = document.getElementById('frog-group');
+      const startX = valToX(startVal) - 18;
+      const endX = valToX(endVal) - 18;
+      const dist = Math.abs(endVal - startVal);
+      const peakY = Math.min(80, 25 + dist * 3.5);
+
+      const duration = 260; // Snappy jump
+      const startTime = performance.now();
+
+      function stepFrame(now) {
+        const elapsed = now - startTime;
+        const p = Math.min(elapsed / duration, 1);
+
+        const currX = startX + (endX - startX) * p;
+        const currY = 55 - Math.sin(p * Math.PI) * peakY;
+
+        frog.setAttribute('transform', `translate(${currX}, ${currY})`);
+
+        if (p < 1) {
+          requestAnimationFrame(stepFrame);
+        } else {
+          frog.setAttribute('transform', `translate(${endX}, 55)`);
+          if (callback) callback();
+        }
+      }
+      requestAnimationFrame(stepFrame);
+    }
+
+    function drawVectorArc(vectorNum, startVal, lengthVal, color) {
+      const endVal = startVal + lengthVal;
+      const startX = valToX(startVal);
+      const endX = valToX(endVal);
+
+      const pathElem = document.getElementById(`vector${vectorNum}-arc`);
+      const arrowElem = document.getElementById(`vector${vectorNum}-arrow`);
+
+      const dirRight = lengthVal > 0;
+      const dist = Math.abs(lengthVal);
+      const arcH = Math.min(55, 18 + dist * 2.8);
+
+      const controlY = 110 - arcH;
+      const pathD = `M ${startX} 110 Q ${(startX + endX) / 2} ${controlY} ${endX} 110`;
+
+      pathElem.setAttribute('d', pathD);
+      pathElem.setAttribute('stroke', color);
+      pathElem.classList.remove('opacity-0');
+
+      const arrSize = 6;
+      const points = dirRight ?
+        `${endX},110 ${endX - arrSize * 1.5},${110 - arrSize} ${endX - arrSize * 1.5},${110 + arrSize}` :
+        `${endX},110 ${endX + arrSize * 1.5},${110 - arrSize} ${endX + arrSize * 1.5},${110 + arrSize}`;
+
+      arrowElem.setAttribute('points', points);
+      arrowElem.setAttribute('fill', color);
+      arrowElem.classList.remove('opacity-0');
+    }
+
+    function clearVectorState() {
+      if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
+      isQuestionLocked = false;
+
+      document.getElementById('vector1-arc').classList.add('opacity-0');
+      document.getElementById('vector2-arc').classList.add('opacity-0');
+      document.getElementById('vector1-arrow').classList.add('opacity-0');
+      document.getElementById('vector2-arrow').classList.add('opacity-0');
+      document.getElementById('frog-group').setAttribute('transform', `translate(${valToX(0) - 18}, 55)`);
+
+      placedVector1 = null;
+      placedVector2 = null;
+      currentStep = 1;
+      updateStepUI();
+    }
+
+    function updateStepUI() {
+      const prompt = document.getElementById('step-prompt');
+      const lockOverlay = document.getElementById('keypad-lock-overlay');
+      const keypadWrapper = document.getElementById('keypad-wrapper');
+
+      if (currentStep === 1) {
+        prompt.innerHTML = `<span>👉 Step 1: Drag or tap <b>Term 1 Vector</b> onto SVG Number Line (starts at 0)</span>`;
+        lockOverlay.classList.remove('hidden');
+        keypadWrapper.classList.add('opacity-50', 'pointer-events-none');
+      } else if (currentStep === 2) {
+        prompt.innerHTML = `<span>👉 Step 2: Drag or tap <b>Term 2 Vector</b> onto SVG Number Line (starts from frog)</span>`;
+        lockOverlay.classList.remove('hidden');
+        keypadWrapper.classList.add('opacity-50', 'pointer-events-none');
+      } else {
+        prompt.innerHTML = `<span class="text-teal-400 font-bold">✨ Step 3: Keypad Unlocked! Type landing answer and press CHECK.</span>`;
+        lockOverlay.classList.add('hidden');
+        keypadWrapper.classList.remove('opacity-50', 'pointer-events-none');
+      }
+    }
+
+    function loadQuestion(index) {
+      if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
+      isQuestionLocked = false;
+
+      const q = QUESTIONS_DATA[index];
+      document.getElementById('equation-display').textContent = q.display;
+      document.getElementById('q-counter').textContent = `${index + 1} / ${QUESTIONS_DATA.length}`;
+
+      const progress = Math.round(((index + 1) / QUESTIONS_DATA.length) * 100);
+      document.getElementById('progress-bar').style.width = `${progress}%`;
+      document.getElementById('progress-text').textContent = `${progress}%`;
+
+      document.getElementById('btn-next-q').classList.add('hidden');
+
+      typedAnswer = "";
+      updateAnswerBox();
+      clearVectorState();
+
+      // Create 4 Arrow Vector Choice Cards (Pure magnitude and direction arrows ONLY, no + or - signs!)
+      const t1Mag = Math.abs(q.term1);
+      const t1DirCorr = q.term1 >= 0 ? 'RIGHT' : 'LEFT';
+      const t1DirOpp = q.term1 >= 0 ? 'LEFT' : 'RIGHT';
+
+      const t2Mag = Math.abs(q.term2);
+      const t2DirCorr = q.term2 >= 0 ? 'RIGHT' : 'LEFT';
+      const t2DirOpp = q.term2 >= 0 ? 'LEFT' : 'RIGHT';
+
+      const options = [
+        { id: 'v1_c', termIndex: 1, mag: t1Mag, dir: t1DirCorr, isCorrect: true,  bg: 'bg-gradient-cyan',   label: 'TERM 1' },
+        { id: 'v1_o', termIndex: 1, mag: t1Mag, dir: t1DirOpp, isCorrect: false, bg: 'bg-gradient-red',    label: 'TERM 1' },
+        { id: 'v2_c', termIndex: 2, mag: t2Mag, dir: t2DirCorr, isCorrect: true,  bg: 'bg-gradient-purple', label: 'TERM 2' },
+        { id: 'v2_o', termIndex: 2, mag: t2Mag, dir: t2DirOpp, isCorrect: false, bg: 'bg-gradient-gold',   label: 'TERM 2' }
+      ];
+
+      // Shuffle options randomly
+      options.sort(() => Math.random() - 0.5);
+
+      const grid = document.getElementById('vector-cards-grid');
+      grid.innerHTML = '';
+
+      options.forEach(opt => {
+        const card = document.createElement('div');
+        const arrowClass = opt.dir === 'RIGHT' ? 'arrow-shape-right' : 'arrow-shape-left';
+        
+        card.className = `arrow-card ${opt.bg} ${arrowClass} p-3 sm:p-4 text-white flex flex-col items-center justify-center shadow-xl cursor-grab active:cursor-grabbing border hover:brightness-110 transition-transform btn-3d relative min-h-[85px]`;
+        card.dataset.optData = JSON.stringify(opt);
+
+        card.innerHTML = `
+          <span class="text-[9px] font-black tracking-widest uppercase opacity-80 block">${opt.label}</span>
+          <span class="text-sm sm:text-base font-black font-game tracking-wider drop-shadow-md">
+            ${opt.dir === 'LEFT' ? '◄' : ''} ${opt.mag} UNITS ${opt.dir === 'RIGHT' ? '►' : ''}
+          </span>
+        `;
+
+        setupPointerDrag(card, opt);
+        grid.appendChild(card);
+      });
+    }
+
+    function setupPointerDrag(cardElem, optData) {
+      let isDragging = false;
+      let proxy = null;
+
+      cardElem.addEventListener('pointerdown', (e) => {
+        if (isQuestionLocked) return;
+        audioSynth.init();
+        audioSynth.tap();
+        isDragging = true;
+        cardElem.setPointerCapture(e.pointerId);
+
+        // Floating Drag Proxy
+        proxy = cardElem.cloneNode(true);
+        proxy.id = 'drag-proxy';
+        proxy.style.width = `${cardElem.offsetWidth}px`;
+        proxy.style.height = `${cardElem.offsetHeight}px`;
+        proxy.style.left = `${e.clientX}px`;
+        proxy.style.top = `${e.clientY}px`;
+        document.body.appendChild(proxy);
+        proxy.classList.remove('hidden');
+
+        document.getElementById('number-line-container').classList.add('number-line-glow');
+      });
+
+      cardElem.addEventListener('pointermove', (e) => {
+        if (!isDragging || !proxy) return;
+        proxy.style.left = `${e.clientX}px`;
+        proxy.style.top = `${e.clientY}px`;
+      });
+
+      cardElem.addEventListener('pointerup', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        document.getElementById('number-line-container').classList.remove('number-line-glow');
+
+        if (proxy) {
+          proxy.remove();
+          proxy = null;
+        }
+
+        applyVectorSelection(optData);
+      });
+
+      cardElem.addEventListener('pointercancel', () => {
+        isDragging = false;
+        document.getElementById('number-line-container').classList.remove('number-line-glow');
+        if (proxy) proxy.remove();
+      });
+    }
+
+    function applyVectorSelection(opt) {
+      if (isQuestionLocked) return;
+
+      if (currentStep === 1) {
+        const signedVal = opt.dir === 'RIGHT' ? opt.mag : -opt.mag;
+        placedVector1 = { ...opt, signedVal };
+
+        drawVectorArc(1, 0, signedVal, opt.dir === 'RIGHT' ? '#00c6ff' : '#ff416c');
+
+        triggerFrogParabolicJump(0, signedVal, () => {
+          audioSynth.drop();
+          currentStep = 2;
+          updateStepUI();
+        });
+      } else if (currentStep === 2) {
+        const startVal = placedVector1.signedVal;
+        const signedVal = opt.dir === 'RIGHT' ? opt.mag : -opt.mag;
+        placedVector2 = { ...opt, signedVal };
+        const endVal = startVal + signedVal;
+
+        drawVectorArc(2, startVal, signedVal, opt.dir === 'RIGHT' ? '#f59e0b' : '#a855f7');
+
+        triggerFrogParabolicJump(startVal, endVal, () => {
+          audioSynth.drop();
+          currentStep = 3;
+          updateStepUI();
+          showToast("👍 Both vectors placed! Keypad unlocked.", "✨");
+        });
+      } else {
+        showToast("Both vectors are placed! Enter answer or click Reset Vectors.", "💡");
+      }
+    }
+
+    function updateAnswerBox() {
+      document.getElementById('typed-answer-text').textContent = typedAnswer !== "" ? typedAnswer : "[ ? ]";
+    }
+
+    function handleKeyInput(key) {
+      if (isQuestionLocked) return;
+      audioSynth.init();
+      audioSynth.tap();
+
+      if (key === 'DEL') {
+        typedAnswer = typedAnswer.slice(0, -1);
+      } else if (key === 'CLR') {
+        typedAnswer = "";
+      } else if (key === '-') {
+        if (typedAnswer === "") typedAnswer = "-";
+        else if (typedAnswer === "-") typedAnswer = "";
+      } else if (/^[0-9]$/.test(key)) {
+        if (typedAnswer.length < 4) typedAnswer += key;
+      }
+      updateAnswerBox();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (currentStep < 3 || isQuestionLocked) return;
+
+      if (e.key >= '0' && e.key <= '9') handleKeyInput(e.key);
+      else if (e.key === '-') handleKeyInput('-');
+      else if (e.key === 'Backspace') handleKeyInput('DEL');
+      else if (e.key === 'Escape') handleKeyInput('CLR');
+      else if (e.key === 'Enter') submitAnswer();
+    });
+
+    document.getElementById('keypad-grid').addEventListener('click', (e) => {
+      const btn = e.target.closest('.key-btn');
+      if (!btn) return;
+      const key = btn.dataset.key;
+      if (key) handleKeyInput(key);
+    });
+
+    document.getElementById('btn-submit').addEventListener('click', submitAnswer);
+
+    document.getElementById('btn-reset-step').addEventListener('click', () => {
+      if (isQuestionLocked) return;
+      audioSynth.init();
+      audioSynth.tap();
+      clearVectorState();
+      showToast("Cleared vectors! Select Term 1 Vector again.", "🔄");
+    });
+
+    document.getElementById('btn-next-q').addEventListener('click', () => {
+      audioSynth.init();
+      audioSynth.tap();
+      nextQuestion();
+    });
+
+    function submitAnswer() {
+      if (isQuestionLocked) return;
+
+      audioSynth.init();
+      const q = QUESTIONS_DATA[currentQuestionIdx];
+      const targetAns = q.term1 + q.term2;
+
+      if (!placedVector1 || !placedVector2) {
+        audioSynth.wrong();
+        showToast("Please place BOTH term vectors on the number line first!", "⚠️");
+        return;
+      }
+
+      if (typedAnswer === "" || typedAnswer === "-") {
+        audioSynth.wrong();
+        showToast("Please enter your answer in the Keypad Answer Box!", "✏️");
+        return;
+      }
+
+      const numVal = parseInt(typedAnswer, 10);
+
+      const v1Ok = placedVector1.isCorrect && placedVector1.termIndex === 1;
+      const v2Ok = placedVector2.isCorrect && placedVector2.termIndex === 2;
+      const ansOk = (numVal === targetAns);
+
+      if (v1Ok && v2Ok && ansOk) {
+        audioSynth.correct();
+        totalScore += 100;
+        correctCount++;
+        document.getElementById('score-display').textContent = totalScore;
+        questionResults.push({ q: q.display, userAns: numVal, correctAns: targetAns, isCorrect: true });
+
+        showToast(`🎉 Excellent! ${q.display.replace('?', targetAns)}`, "✅");
+        document.getElementById('btn-next-q').classList.remove('hidden');
+
+        isQuestionLocked = true;
+        autoAdvanceTimer = setTimeout(() => {
+          nextQuestion();
+        }, 1500);
+      } else {
+        // INCORRECT ANSWER: Reveal correct answer and automatically advance!
+        audioSynth.wrong();
+        questionResults.push({ q: q.display, userAns: numVal, correctAns: targetAns, isCorrect: false });
+
+        showToast(`❌ Incorrect! The correct answer is ${targetAns}.`, "🐸");
+        document.getElementById('btn-next-q').classList.remove('hidden');
+
+        isQuestionLocked = true;
+        autoAdvanceTimer = setTimeout(() => {
+          nextQuestion();
+        }, 2500);
+      }
+    }
+
+    function nextQuestion() {
+      currentQuestionIdx++;
+      if (currentQuestionIdx < QUESTIONS_DATA.length) {
+        loadQuestion(currentQuestionIdx);
+      } else {
+        showSummaryScreen();
+      }
+    }
+
+    function showToast(msg, icon = 'ℹ️') {
+      const banner = document.getElementById('toast-banner');
+      document.getElementById('toast-msg').textContent = msg;
+      document.getElementById('toast-icon').textContent = icon;
+
+      banner.classList.remove('opacity-0', 'pointer-events-none');
+      banner.classList.add('opacity-100');
+
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => {
+        banner.classList.remove('opacity-100');
+        banner.classList.add('opacity-0', 'pointer-events-none');
+      }, 2500);
+    }
+
+    function showSummaryScreen() {
+      audioSynth.fanfare();
+      const acc = Math.round((correctCount / QUESTIONS_DATA.length) * 100);
+
+      document.getElementById('summary-score').textContent = totalScore;
+      document.getElementById('summary-accuracy').textContent = `${acc}%`;
+
+      let stars = '⭐⭐⭐';
+      let grade = 'Master Math Frog!';
+      if (acc < 60) { stars = '⭐'; grade = 'Keep Practicing!'; }
+      else if (acc < 90) { stars = '⭐⭐'; grade = 'Great Job!'; }
+
+      document.getElementById('star-display').textContent = stars;
+      document.getElementById('summary-grade').textContent = grade;
+
+      // Populate review list
+      const reviewList = document.getElementById('review-list');
+      reviewList.innerHTML = '';
+      questionResults.forEach((res, i) => {
+        const item = document.createElement('div');
+        item.className = `flex justify-between items-center p-1.5 rounded-lg ${res.isCorrect ? 'bg-emerald-950/40 text-emerald-300' : 'bg-rose-950/40 text-rose-300'}`;
+        item.innerHTML = `
+          <span>Q${i+1}: ${res.q.replace('?', res.correctAns)}</span>
+          <span class="font-bold">${res.isCorrect ? '✓ Correct' : '✗ Answer: ' + res.userAns + ' (Ans: ' + res.correctAns + ')'}</span>
+        `;
+        reviewList.appendChild(item);
+      });
+
+      const modal = document.getElementById('summary-modal');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      modal.classList.add('opacity-100');
+    }
+
+    document.getElementById('btn-restart-game').addEventListener('click', () => {
+      audioSynth.init();
+      audioSynth.tap();
+      currentQuestionIdx = 0;
+      totalScore = 0;
+      correctCount = 0;
+      questionResults = [];
+      document.getElementById('score-display').textContent = '0';
+
+      const modal = document.getElementById('summary-modal');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+
+      loadQuestion(0);
+    });
+
+    // Initialize game on window load
+    window.onload = function() {
+      buildNumberLineTicks();
+      loadQuestion(0);
+    };
+  </script>
+</body>
+</html>
